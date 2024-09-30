@@ -1,0 +1,159 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=autorun.ico
+#AutoIt3Wrapper_Compression=4
+#AutoIt3Wrapper_UseUpx=y
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
+#include <GUIConstantsEx.au3>
+
+Global $originalPos[2]
+Global $isRunning = False
+
+;===============================;
+; Hotkeys für Funktionen setzen ;
+;===============================;
+HotKeySet("{F1}", "Aimbot")
+HotKeySet("{F2}", "AntiRecoil")
+HotKeySet("{F3}", "AntiSpreading")
+HotKeySet("{F4}", "RapidFire")
+HotKeySet("{F5}", "Triggerbot")
+
+HotKeySet("{ESC}", "quit")
+
+Func quit()
+    $isRunning = True
+EndFunc
+
+;=======================; Funktionen
+
+Func Aimbot()
+
+    While _IsPressed("01") and _IsPressed("02") And $isRunning
+            Local $target = FindTarget()
+            If IsArray($target) Then
+                MouseMove($target[0], $target[1], 1)
+            EndIf
+        Sleep(10)
+    WEnd
+EndFunc
+
+Func AntiRecoil()
+
+    While _IsPressed("01") And $isRunning
+        Local $pos = MouseGetPos()
+        MouseMove($pos[0], $pos[1] + 10, 0)
+		AntiSpreading()
+        Sleep(1)
+    WEnd
+EndFunc
+
+Func AntiSpreading()
+
+	$originalPos = MouseGetPos()
+    While _IsPressed("01") And $isRunning
+        resetMousePos()
+        Sleep(1)
+    WEnd
+EndFunc
+
+Func RapidFire()
+    While _IsPressed("01") And $isRunning
+        MouseClick("left")
+		MouseClick("left")
+		MouseClick("left")
+        Sleep(1)
+    WEnd
+EndFunc
+
+Func Triggerbot()
+    While $isRunning
+        If _IsPressed("01") And _IsPressed("02") Then
+            Local $target = FindTarget()
+            If IsArray($target) Then
+                MouseClick("left")
+                Sleep(100)
+            EndIf
+        EndIf
+        Sleep(10)
+    WEnd
+EndFunc
+
+Func resetMousePos()
+    Local $currentPos = MouseGetPos()
+    If $currentPos[0] <> $originalPos[0] Or $currentPos[1] <> $originalPos[1] Then
+        MouseMove($originalPos[0], $originalPos[1], 0)
+    EndIf
+    Sleep(10)
+EndFunc
+
+Func _IsPressed($hexKey)
+    Local $aR
+    $aR = DllCall("user32.dll", "int", "GetAsyncKeyState", "int", "0x" & $hexKey)
+    If [MENTION=2544426]Error T[/MENTION]hen Return 0
+    Return BitAND($aR[0], 0x8000) <> 0
+EndFunc
+
+Func FindTarget()
+    Local $targetMarked = _IsPressed("04")
+    If $targetMarked Then
+        Local $targetPos = MouseGetPos()
+        Return $targetPos
+    Else
+        Return Null
+    EndIf
+EndFunc
+
+Func ShowMenu()
+    Local $hGUI = GUICreate("Function Selection", 300, 200)
+    Local $chkAntiAll = GUICtrlCreateCheckbox("Anti Recoil/Spread + Rapidfire", 10, 10, 250, 20)
+    Local $chkAimbot = GUICtrlCreateCheckbox("Aimbot", 10, 40, 100, 20)
+    Local $chkTriggerbot = GUICtrlCreateCheckbox("Triggerbot", 10, 70, 100, 20)
+    Local $chkAntiRecoil = GUICtrlCreateCheckbox("Anti Recoil", 10, 100, 100, 20)
+    Local $chkAntiSpreading = GUICtrlCreateCheckbox("Anti Spreading", 10, 130, 100, 20)
+    Local $chkRapidFire = GUICtrlCreateCheckbox("Rapidfire", 10, 160, 100, 20)
+    Local $btnStart = GUICtrlCreateButton("Start", 110, 170, 75, 25)
+    Local $btnStop = GUICtrlCreateButton("Stop", 200, 170, 75, 25)
+
+    ; Setze die GUI als Topmost
+    WinSetOnTop($hGUI, "", 1)
+
+    GUISetState(@SW_SHOW, $hGUI)
+
+    While 1
+        Switch GUIGetMsg()
+            Case $GUI_EVENT_CLOSE
+                Exit
+            Case $btnStart
+                If GUICtrlRead($chkAntiAll) = $GUI_CHECKED Then
+				    AntiRecoil()
+					AntiSpreading()
+					RapidFire()
+                EndIf
+                If GUICtrlRead($chkAimbot) = $GUI_CHECKED Then
+                    Aimbot()
+                EndIf
+                If GUICtrlRead($chkTriggerbot) = $GUI_CHECKED Then
+                    Triggerbot()
+                EndIf
+                If GUICtrlRead($chkAntiRecoil) = $GUI_CHECKED Then
+                    AntiRecoil()
+                EndIf
+                If GUICtrlRead($chkAntiSpreading) = $GUI_CHECKED Then
+                    AntiSpreading()
+                EndIf
+                If GUICtrlRead($chkRapidFire) = $GUI_CHECKED Then
+                    RapidFire()
+                EndIf
+            Case $btnStop
+                stopAll()
+                ExitLoop
+        EndSwitch
+    WEnd
+
+    GUIDelete($hGUI)
+EndFunc
+
+Func stopAll()
+    $isRunning = False
+EndFunc
+
+ShowMenu()
